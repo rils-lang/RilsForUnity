@@ -4,7 +4,7 @@
   "version": "0.2.0",
   "unity": "2022.3",
   "description": "Unity integration for compiling, importing, and running Rils scripts.",
-  "documentationUrl": "https://github.com/rils-lang/rils/blob/main/docs/unity/rils-for-unity-plan.md",
+  "documentationUrl": "https://github.com/rils-lang/rils/blob/main/integrations/RilsForUnity/Packages/com.rils-lang.rils-for-unity/README.md",
   "changelogUrl": "https://github.com/rils-lang/rils/blob/main/CHANGELOG.md",
   "license": "Apache-2.0",
   "author": {
@@ -12,5 +12,12 @@
   },
   "dependencies": {
     "com.unity.addressables": "1.22.3"
-  }
+  },
+  "samples": [
+    {
+      "displayName": "M0 Scalar Interop",
+      "description": "Minimal synchronous C# to Rils and Rils to C# scalar calls.",
+      "path": "Samples~/M0 Scalar Interop"
+    }
+  ]
 }

@@ -1,0 +1,19 @@
+{
+    "name": "RilsForUnity.Addressables",
+    "rootNamespace": "Rils.Unity.Addressables",
+    "references": [
+        "Rils.CSharp",
+        "RilsForUnity.Runtime",
+        "Unity.Addressables",
+        "Unity.ResourceManager"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

@@ -1,0 +1,16 @@
+{
+  "name": "com.rils-lang.rils-for-unity",
+  "displayName": "Rils for Unity",
+  "version": "0.2.0",
+  "unity": "2022.3",
+  "description": "Unity integration for compiling, importing, and running Rils scripts.",
+  "documentationUrl": "https://github.com/rils-lang/rils/blob/main/docs/unity/rils-for-unity-plan.md",
+  "changelogUrl": "https://github.com/rils-lang/rils/blob/main/CHANGELOG.md",
+  "license": "Apache-2.0",
+  "author": {
+    "name": "Rils contributors"
+  },
+  "dependencies": {
+    "com.unity.addressables": "1.22.3"
+  }
+}

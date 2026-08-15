@@ -1,0 +1,16 @@
+{
+    "name": "RilsForUnity.Runtime",
+    "rootNamespace": "Rils.Unity",
+    "references": [
+        "Rils.CSharp"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

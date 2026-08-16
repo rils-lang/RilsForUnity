@@ -1,5 +1,10 @@
 pub fn awake(host: HostHandle) {
     unity::object::is_valid(host);
+    let transform = unity::game_object::transform(host);
+    unity::transform::position_x(transform);
+    unity::transform::position_y(transform);
+    unity::transform::position_z(transform);
+    unity::game_object::active_self(host);
 }
 
 pub fn start(host: HostHandle) {

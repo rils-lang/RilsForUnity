@@ -43,6 +43,9 @@ namespace Rils.Unity
                 _hosts = new RilsHostRegistry(_runtime);
                 UnityObjectHostBindings.Register(_hosts, _handles);
                 _hosts.AllowCapability("unity.object");
+                _hosts.AllowCapability("unity.game_object");
+                _hosts.AllowCapability("unity.transform");
+                _hosts.AllowCapability("unity.component");
                 _hosts.Freeze();
                 _module = _runtime.LoadBytecode(_script.GetBytecode());
                 _module.ValidateHost();

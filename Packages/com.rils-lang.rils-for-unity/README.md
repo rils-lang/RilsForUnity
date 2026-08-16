@@ -54,6 +54,17 @@ Only declared callbacks are invoked. The `HostHandle` identifies the owning
 GameObject for the lifetime of that runtime instance; it becomes invalid when
 the component is destroyed.
 
+The first manual Unity host surface is available through these modules:
+
+- `unity::object`: validity and instance ID checks.
+- `unity::game_object`: active-state queries, activation changes, and `Transform` lookup.
+- `unity::transform`: position component queries and position updates.
+- `unity::component`: lookup of the owning `GameObject`.
+
+These bindings intentionally use opaque `HostHandle` values and scalar arguments only. String,
+struct, collection, and general reflection-based exports are reserved for a later compatible
+binding layer.
+
 ## Host manifests
 
 Use `Rils > Generate Unity Host Manifest` after adding or changing Unity host

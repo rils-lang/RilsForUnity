@@ -39,6 +39,9 @@ namespace Rils.Unity.Editor
             {
                 UnityObjectHostBindings.Register(hosts, handles);
                 hosts.AllowCapability("unity.object");
+                hosts.AllowCapability("unity.game_object");
+                hosts.AllowCapability("unity.transform");
+                hosts.AllowCapability("unity.component");
                 return runtime.GetHostManifest();
             }
         }

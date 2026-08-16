@@ -1,7 +1,7 @@
 {
   "name": "com.rils-lang.rils-for-unity",
   "displayName": "Rils for Unity",
-  "version": "0.2.0",
+  "version": "0.1.0",
   "unity": "2022.3",
   "description": "Unity integration for compiling, importing, and running Rils scripts.",
   "documentationUrl": "https://github.com/rils-lang/rils/blob/main/integrations/RilsForUnity/Packages/com.rils-lang.rils-for-unity/README.md",

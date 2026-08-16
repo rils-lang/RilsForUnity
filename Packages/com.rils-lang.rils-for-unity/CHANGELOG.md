@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.2.0] - Unreleased
+## [0.1.0] - Unreleased
 
 - Initial embedded Unity package layout.
 - Added `.rils` asset importing and bytecode assets.

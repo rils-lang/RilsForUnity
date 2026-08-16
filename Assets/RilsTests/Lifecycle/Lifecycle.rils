@@ -1,0 +1,12 @@
+pub fn awake(host: HostHandle) {
+    unity::object::is_valid(host);
+}
+
+pub fn start(host: HostHandle) {
+}
+
+pub fn update(host: HostHandle, delta_seconds: f32) {
+}
+
+pub fn on_destroy(host: HostHandle) {
+}

@@ -12,12 +12,5 @@
   },
   "dependencies": {
     "com.unity.addressables": "1.22.3"
-  },
-  "samples": [
-    {
-      "displayName": "M0 Scalar Interop",
-      "description": "Minimal synchronous C# to Rils and Rils to C# scalar calls.",
-      "path": "Samples~/M0 Scalar Interop"
-    }
-  ]
+  }
 }

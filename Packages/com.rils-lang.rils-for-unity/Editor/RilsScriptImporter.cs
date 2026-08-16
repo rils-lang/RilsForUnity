@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using Rils.CSharp;
@@ -16,6 +17,10 @@ namespace Rils.Unity.Editor
             @"^\s*mod\s+([A-Za-z_][A-Za-z0-9_]*)\s*;",
             RegexOptions.Compiled | RegexOptions.Multiline | RegexOptions.CultureInvariant);
 
+        private static readonly Regex LifecycleDeclaration = new Regex(
+            @"^\s*pub\s+fn\s+(awake|start|update|on_destroy)\s*\(",
+            RegexOptions.Compiled | RegexOptions.Multiline | RegexOptions.CultureInvariant);
+
         public override void OnImportAsset(AssetImportContext context)
         {
             string fullPath = Path.GetFullPath(context.assetPath);
@@ -23,14 +28,40 @@ namespace Rils.Unity.Editor
 
             try
             {
-                using (var runtime = new RilsRuntime())
-                using (RilsModule module = runtime.CompileFile(fullPath))
+                List<byte[]> hostManifestFragments = ReadHostManifestFragments();
+                var runtime = new RilsRuntime();
+                RilsHostRegistry? hosts = null;
+                try
                 {
+                    if (hostManifestFragments.Count != 0)
+                    {
+                        hosts = new RilsHostRegistry(runtime);
+                        foreach (byte[] fragment in hostManifestFragments)
+                        {
+                            runtime.RegisterHostManifest(fragment);
+                        }
+                        runtime.AllowCapability("unity.object");
+                        runtime.FreezeHostRegistry();
+                    }
+                    using (RilsModule module = runtime.CompileFile(fullPath))
+                    {
                     var asset = ScriptableObject.CreateInstance<RilsBytecodeAsset>();
                     asset.name = Path.GetFileNameWithoutExtension(context.assetPath);
-                    asset.Initialize(context.assetPath, module.GetBytecode());
+                    asset.Initialize(
+                        context.assetPath,
+                        module.GetBytecode(),
+                        ReadLifecycleFlags(File.ReadAllText(fullPath, Encoding.UTF8)),
+                        hostManifestFragments.Count == 0
+                            ? Array.Empty<byte>()
+                            : runtime.GetHostManifest());
                     context.AddObjectToAsset("bytecode", asset);
                     context.SetMainObject(asset);
+                    }
+                }
+                finally
+                {
+                    runtime.Dispose();
+                    hosts?.Dispose();
                 }
             }
             catch (Exception exception)
@@ -38,6 +69,37 @@ namespace Rils.Unity.Editor
                 context.LogImportError(
                     $"Failed to compile Rils script '{context.assetPath}': {exception}");
             }
+        }
+
+        private static List<byte[]> ReadHostManifestFragments()
+        {
+            string projectRoot = Path.GetFullPath(Path.Combine(Application.dataPath, ".."));
+            string manifestDirectory = Path.Combine(projectRoot, ".rils", "manifest");
+            if (!Directory.Exists(manifestDirectory))
+            {
+                return new List<byte[]>();
+            }
+            return Directory.GetFiles(manifestDirectory, "*.rilhm", SearchOption.AllDirectories)
+                .OrderBy(path => path, StringComparer.OrdinalIgnoreCase)
+                .Select(File.ReadAllBytes)
+                .ToList();
+        }
+
+        private static RilsLifecycleFlags ReadLifecycleFlags(string source)
+        {
+            RilsLifecycleFlags flags = RilsLifecycleFlags.None;
+            foreach (Match match in LifecycleDeclaration.Matches(source))
+            {
+                flags |= match.Groups[1].Value switch
+                {
+                    "awake" => RilsLifecycleFlags.Awake,
+                    "start" => RilsLifecycleFlags.Start,
+                    "update" => RilsLifecycleFlags.Update,
+                    "on_destroy" => RilsLifecycleFlags.OnDestroy,
+                    _ => RilsLifecycleFlags.None,
+                };
+            }
+            return flags;
         }
 
         private static void RegisterModuleDependencies(

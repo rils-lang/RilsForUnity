@@ -9,6 +9,7 @@ This package integrates the Rils runtime with Unity 2022.3 LTS and later in the
 - initial `unity::object::is_valid` and `unity::object::instance_id` host bindings;
 - a `ScriptedImporter` for `.rils` source assets;
 - `RilsBytecodeAsset` for serialized bytecode;
+- the `rils_for_unity` Rils library, including the `RilsBehaviour` lifecycle trait;
 - `RilsBehaviour`, which runs a dragged bytecode asset from Unity lifecycle callbacks;
 - an editor command that generates Unity host manifest fragments under `.rils/manifest/`;
 - optional Addressables loading support.
@@ -38,19 +39,39 @@ Only synchronous scalar values are supported at this stage. Host registration
 must be completed before freezing the registry, and calls must stay on the
 thread that created the `RilsRuntime` (the Unity main thread in normal use).
 
+## RilsForUnity project dependency
+
+The package ships its Unity-specific language surface under `Runtime/Rils/`.
+Add it as a path dependency in the project's `rils.toml`:
+
+```toml
+[dependencies.rils_for_unity]
+path = "Packages/com.rils-lang.rils-for-unity/Runtime/Rils"
+prelude = true
+```
+
+This makes the library available to the compiler and Analyzer through the
+`crate::rils_for_unity::` path. The package prelude is loaded automatically.
+
 ## Lifecycle scripts
 
 Attach `RilsBehaviour` to a GameObject and assign any imported `.rils` asset to
-its `Script` field. The importer records these optional public functions:
+its `Script` field. A lifecycle script implements the package-provided trait:
 
 ```rils
-pub fn awake(host: HostHandle) { }
-pub fn start(host: HostHandle) { }
-pub fn update(host: HostHandle, delta_seconds: f32) { }
-pub fn on_destroy(host: HostHandle) { }
+use crate::rils_for_unity::behaviour::RilsBehaviour;
+
+pub struct PlayerBehaviour { }
+
+impl RilsBehaviour for PlayerBehaviour {
+    fn awake(&mut self, host: HostHandle) { }
+    fn start(&mut self, host: HostHandle) { }
+    fn update(&mut self, host: HostHandle, delta_seconds: f32) { }
+    fn on_destroy(&mut self, host: HostHandle) { }
+}
 ```
 
-Only declared callbacks are invoked. The `HostHandle` identifies the owning
+The `HostHandle` identifies the owning
 GameObject for the lifetime of that runtime instance; it becomes invalid when
 the component is destroyed.
 

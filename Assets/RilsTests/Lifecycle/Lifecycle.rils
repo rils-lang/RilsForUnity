@@ -1,17 +1,27 @@
-pub fn awake(host: HostHandle) {
-    unity::object::is_valid(host);
-    let transform = unity::game_object::transform(host);
-    unity::transform::position_x(transform);
-    unity::transform::position_y(transform);
-    unity::transform::position_z(transform);
-    unity::game_object::active_self(host);
+pub struct LifecycleBehaviour {
+    enabled: bool,
 }
 
-pub fn start(host: HostHandle) {
-}
+impl RilsBehaviour for LifecycleBehaviour {
+    fn awake(&mut self, host: HostHandle) {
+        host.is_valid();
+        let transform = host.transform();
+        transform.position_x();
+        transform.position_y();
+        transform.position_z();
+        host.active_self();
+    }
 
-pub fn update(host: HostHandle, delta_seconds: f32) {
-}
+    fn start(&mut self, host: HostHandle) {
+        host.is_valid();
+    }
 
-pub fn on_destroy(host: HostHandle) {
+    fn update(&mut self, host: HostHandle, delta_seconds: f32) {
+        host.is_valid();
+        let _ = delta_seconds;
+    }
+
+    fn on_destroy(&mut self, host: HostHandle) {
+        host.is_valid();
+    }
 }

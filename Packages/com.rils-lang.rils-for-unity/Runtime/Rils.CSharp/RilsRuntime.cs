@@ -122,7 +122,6 @@ namespace Rils.CSharp
         }
 
         /// Freezes the host declaration contract without installing managed callbacks.
-        /// This is useful for editor-only compilation and validation of manifest-backed scripts.
         public void FreezeHostRegistry()
         {
             EnsureUsable();

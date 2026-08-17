@@ -1,0 +1,11 @@
+/// Lifecycle contract supplied by RilsForUnity.
+///
+/// A Unity Behaviour script implements this trait for its state type. The
+/// Unity adapter discovers the implementation and invokes only the methods
+/// that are part of the contract.
+pub trait RilsBehaviour {
+    fn awake(&mut self, host: HostHandle);
+    fn start(&mut self, host: HostHandle);
+    fn update(&mut self, host: HostHandle, delta_seconds: f32);
+    fn on_destroy(&mut self, host: HostHandle);
+}

@@ -1,0 +1,7 @@
+[project]
+name = "rils_for_unity_tests"
+script_paths = ["Assets/RilsTests"]
+
+[dependencies.rils_for_unity]
+path = "Packages/com.rils-lang.rils-for-unity/Runtime/Rils"
+prelude = true

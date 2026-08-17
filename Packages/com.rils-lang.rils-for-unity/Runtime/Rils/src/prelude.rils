@@ -1,0 +1,6 @@
+// RilsForUnity prelude.
+//
+// The project loader injects this file before user project modules. The
+// Behaviour trait remains addressable as
+// `crate::rils_for_unity::behaviour::RilsBehaviour` so analyzers and IDEs can show
+// its declaration and documentation.

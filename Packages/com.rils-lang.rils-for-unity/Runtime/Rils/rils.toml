@@ -1,0 +1,6 @@
+[project]
+name = "rils_for_unity"
+script_paths = ["src"]
+
+[lib]
+prelude = "src/prelude.rils"

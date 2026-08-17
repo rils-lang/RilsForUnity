@@ -23,7 +23,8 @@ namespace RilsForUnity
                 {
                     RilsObjectHandle handle = arguments[0].AsHostHandle(handles.SessionId);
                     return RilsValue.From(handles.TryResolve<UnityEngine.Object>(handle, out _));
-                }));
+                },
+                receiver: RilsHostReceiver.RefSelf));
 
             registry.Register(new RilsHostFunction(
                 104,
@@ -41,7 +42,8 @@ namespace RilsForUnity
                             "The Unity object handle is no longer valid."));
                     }
                     return RilsValue.From((long)target.GetInstanceID());
-                }));
+                },
+                receiver: RilsHostReceiver.RefSelf));
 
             registry.Register(new RilsHostFunction(
                 105,
@@ -59,7 +61,8 @@ namespace RilsForUnity
                             "The GameObject handle is no longer valid."));
                     }
                     return RilsValue.From(target.activeSelf);
-                }));
+                },
+                receiver: RilsHostReceiver.RefSelf));
 
             registry.Register(new RilsHostFunction(
                 106,
@@ -82,7 +85,8 @@ namespace RilsForUnity
                     }
                     target.SetActive(arguments[1].AsBool());
                     return RilsValue.Unit;
-                }));
+                },
+                receiver: RilsHostReceiver.RefMutSelf));
 
             registry.Register(new RilsHostFunction(
                 107,
@@ -100,7 +104,8 @@ namespace RilsForUnity
                             "The GameObject handle is no longer valid."));
                     }
                     return RilsValue.From(handles.Acquire(target.transform));
-                }));
+                },
+                receiver: RilsHostReceiver.RefSelf));
 
             RegisterTransformCoordinate(registry, handles, 108, "x", value => value.x);
             RegisterTransformCoordinate(registry, handles, 109, "y", value => value.y);
@@ -124,7 +129,8 @@ namespace RilsForUnity
                     target.position = new Vector3(
                         arguments[1].AsF32(), arguments[2].AsF32(), arguments[3].AsF32());
                     return RilsValue.Unit;
-                }));
+                },
+                receiver: RilsHostReceiver.RefMutSelf));
 
             registry.Register(new RilsHostFunction(
                 112,
@@ -142,7 +148,8 @@ namespace RilsForUnity
                             "The Component handle is no longer valid."));
                     }
                     return RilsValue.From(handles.Acquire(target.gameObject));
-                }));
+                },
+                receiver: RilsHostReceiver.RefSelf));
         }
 
         private static void RegisterTransformCoordinate(
@@ -158,7 +165,8 @@ namespace RilsForUnity
                 "unity.transform",
                 new RilsHostParameter(RilsValueTag.F32),
                 new[] { new RilsHostParameter(RilsValueTag.HostHandle, RilsHostTransferMode.Handle) },
-                arguments => getter(ResolveTransform(handles, arguments[0]).position)));
+                arguments => getter(ResolveTransform(handles, arguments[0]).position),
+                receiver: RilsHostReceiver.RefSelf));
         }
 
         private static Transform ResolveTransform(

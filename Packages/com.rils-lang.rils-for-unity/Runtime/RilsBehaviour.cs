@@ -22,6 +22,26 @@ namespace Rils.Unity
 
         public RilsBytecodeAsset? Script => _script;
 
+        private void OnValidate()
+        {
+            if (_script == null || _script.HasBehaviourTypes)
+            {
+                return;
+            }
+
+            _script = null;
+#if UNITY_EDITOR
+            UnityEditor.EditorUtility.DisplayDialog(
+                "Invalid Rils Behaviour",
+                "The selected Rils asset does not implement RilsBehaviour and cannot be attached.",
+                "OK");
+#else
+            Debug.LogWarning(
+                "The selected Rils asset does not implement RilsBehaviour and was rejected.",
+                this);
+#endif
+        }
+
         private void Awake()
         {
             if (_script == null)
@@ -32,6 +52,11 @@ namespace Rils.Unity
 
             try
             {
+                if (!_script.HasBehaviourTypes)
+                {
+                    throw new InvalidOperationException(
+                        $"Rils asset '{_script.name}' does not implement RilsBehaviour.");
+                }
                 _runtime = new RilsRuntime();
                 byte[] hostManifest = _script.GetHostManifest();
                 if (hostManifest.Length != 0)

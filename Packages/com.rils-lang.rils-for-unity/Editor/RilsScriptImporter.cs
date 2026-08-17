@@ -21,9 +21,21 @@ namespace Rils.Unity.Editor
             @"^\s*pub\s+fn\s+(awake|start|update|on_destroy)\s*\(",
             RegexOptions.Compiled | RegexOptions.Multiline | RegexOptions.CultureInvariant);
 
+        private static readonly Regex BehaviourImplementation = new Regex(
+            @"\bimpl\s+RilsBehaviour\s+for\s+([A-Za-z_][A-Za-z0-9_]*)\b",
+            RegexOptions.Compiled | RegexOptions.CultureInvariant);
+
         public override void OnImportAsset(AssetImportContext context)
         {
             string fullPath = Path.GetFullPath(context.assetPath);
+            if (IsLibrarySource(fullPath))
+            {
+                // Library sources are loaded through the project dependency
+                // graph. They are not standalone Unity assets; importing
+                // them individually would make a prelude look like an entry
+                // script and produce a misleading script-path diagnostic.
+                return;
+            }
             RegisterModuleDependencies(context, fullPath, new HashSet<string>(StringComparer.OrdinalIgnoreCase));
 
             try
@@ -41,6 +53,9 @@ namespace Rils.Unity.Editor
                             runtime.RegisterHostManifest(fragment);
                         }
                         runtime.AllowCapability("unity.object");
+                        runtime.AllowCapability("unity.game_object");
+                        runtime.AllowCapability("unity.transform");
+                        runtime.AllowCapability("unity.component");
                         runtime.FreezeHostRegistry();
                     }
                     using (RilsModule module = runtime.CompileFile(fullPath))
@@ -53,7 +68,8 @@ namespace Rils.Unity.Editor
                         ReadLifecycleFlags(File.ReadAllText(fullPath, Encoding.UTF8)),
                         hostManifestFragments.Count == 0
                             ? Array.Empty<byte>()
-                            : runtime.GetHostManifest());
+                            : runtime.GetHostManifest(),
+                        ReadBehaviourTypes(File.ReadAllText(fullPath, Encoding.UTF8)));
                     context.AddObjectToAsset("bytecode", asset);
                     context.SetMainObject(asset);
                     }
@@ -100,6 +116,35 @@ namespace Rils.Unity.Editor
                 };
             }
             return flags;
+        }
+
+        private static IReadOnlyList<string> ReadBehaviourTypes(string source)
+        {
+            return BehaviourImplementation.Matches(source)
+                .Cast<Match>()
+                .Select(match => match.Groups[1].Value)
+                .Distinct(StringComparer.Ordinal)
+                .OrderBy(name => name, StringComparer.Ordinal)
+                .ToArray();
+        }
+
+        private static bool IsLibrarySource(string fullPath)
+        {
+            string? directory = Path.GetDirectoryName(fullPath);
+            while (!string.IsNullOrEmpty(directory))
+            {
+                string projectFile = Path.Combine(directory, "rils.toml");
+                if (File.Exists(projectFile))
+                {
+                    string source = File.ReadAllText(projectFile, Encoding.UTF8);
+                    return Regex.IsMatch(
+                        source,
+                        @"^\s*\[lib\]\s*$",
+                        RegexOptions.Multiline | RegexOptions.CultureInvariant);
+                }
+                directory = Path.GetDirectoryName(directory);
+            }
+            return false;
         }
 
         private static void RegisterModuleDependencies(

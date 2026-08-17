@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace Rils.Unity
@@ -28,6 +30,9 @@ namespace Rils.Unity
         [SerializeField, HideInInspector]
         private byte[] _hostManifest = Array.Empty<byte>();
 
+        [SerializeField, HideInInspector]
+        private string[] _behaviourTypes = Array.Empty<string>();
+
         public string SourceName => _sourceName;
 
         public int BytecodeLength => _bytecode.Length;
@@ -35,6 +40,10 @@ namespace Rils.Unity
         public RilsLifecycleFlags LifecycleFlags => _lifecycleFlags;
 
         public bool HasHostManifest => _hostManifest.Length != 0;
+
+        public bool HasBehaviourTypes => _behaviourTypes != null && _behaviourTypes.Length != 0;
+
+        public IReadOnlyList<string> BehaviourTypes => _behaviourTypes ?? Array.Empty<string>();
 
         public byte[] GetHostManifest()
         {
@@ -50,7 +59,8 @@ namespace Rils.Unity
             string sourceName,
             byte[] bytecode,
             RilsLifecycleFlags lifecycleFlags,
-            byte[]? hostManifest = null)
+            byte[]? hostManifest = null,
+            IReadOnlyList<string>? behaviourTypes = null)
         {
             _sourceName = sourceName ?? throw new ArgumentNullException(nameof(sourceName));
             _bytecode = bytecode != null
@@ -60,6 +70,9 @@ namespace Rils.Unity
             _hostManifest = hostManifest != null
                 ? (byte[])hostManifest.Clone()
                 : Array.Empty<byte>();
+            _behaviourTypes = behaviourTypes != null
+                ? behaviourTypes.ToArray()
+                : Array.Empty<string>();
         }
     }
 }

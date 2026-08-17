@@ -115,7 +115,7 @@
     },
     "com.unity.addressables": {
       "version": "1.22.3",
-      "depth": 1,
+      "depth": 0,
       "source": "registry",
       "dependencies": {
         "com.unity.modules.assetbundle": "1.0.0",

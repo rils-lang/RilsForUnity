@@ -2,6 +2,19 @@
 
 ## [0.1.0] - Unreleased
 
+- Replaced the public bytecode asset model with a `RilsScriptAsset` main asset and one
+  `RilsEntryAsset` sub-asset per detected `RilsBehaviour` implementation.
+- Added `.rilslib` importing as `RilsLibraryAsset` while keeping source packages as the default
+  development dependency workflow.
+- Unity host manifest startup validation now atomically regenerates missing, damaged, or outdated
+  built-in manifests and reimports `.rils` assets without requiring a manual menu action.
+- Library prelude sources now import as `RilsScriptAsset` main assets without duplicate prelude
+  injection.
+- Added `Assets/Create/Rils` commands for empty scripts and complete `RilsBehaviour` templates.
+- `RilsBehaviour` templates now use unit structs and rely on the package prelude instead of emitting
+  a redundant explicit trait import. Created filenames are normalized to valid Rils module
+  identifiers, including duplicate-name suffixes.
+
 - Initial embedded Unity package layout.
 - Added `.rils` asset importing and bytecode assets.
 - Added the C# runtime facade and Windows x86_64 native plugin hook.

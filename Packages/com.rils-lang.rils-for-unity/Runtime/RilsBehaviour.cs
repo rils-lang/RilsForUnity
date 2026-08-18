@@ -6,10 +6,10 @@ using UnityEngine;
 
 namespace Rils.Unity
 {
-    /// Runs a compiled RilsBytecodeAsset using Unity lifecycle conventions.
+    /// Runs one imported RilsBehaviour entry using Unity lifecycle conventions.
     public sealed class RilsBehaviour : MonoBehaviour
     {
-        [SerializeField] private RilsBytecodeAsset? _script;
+        [SerializeField] private RilsEntryAsset? _entry;
         [SerializeField] private bool _disableOnError = true;
 
         private RilsRuntime? _runtime;
@@ -20,45 +20,20 @@ namespace Rils.Unity
         private RilsObjectHandle _selfHandle;
         private bool _destroyed;
 
-        public RilsBytecodeAsset? Script => _script;
-
-        private void OnValidate()
-        {
-            if (_script == null || _script.HasBehaviourTypes)
-            {
-                return;
-            }
-
-            _script = null;
-#if UNITY_EDITOR
-            UnityEditor.EditorUtility.DisplayDialog(
-                "Invalid Rils Behaviour",
-                "The selected Rils asset does not implement RilsBehaviour and cannot be attached.",
-                "OK");
-#else
-            Debug.LogWarning(
-                "The selected Rils asset does not implement RilsBehaviour and was rejected.",
-                this);
-#endif
-        }
+        public RilsEntryAsset? Entry => _entry;
 
         private void Awake()
         {
-            if (_script == null)
+            if (_entry == null)
             {
-                Debug.LogWarning("RilsBehaviour has no RilsBytecodeAsset assigned.", this);
+                Debug.LogWarning("RilsBehaviour has no RilsEntryAsset assigned.", this);
                 return;
             }
 
             try
             {
-                if (!_script.HasBehaviourTypes)
-                {
-                    throw new InvalidOperationException(
-                        $"Rils asset '{_script.name}' does not implement RilsBehaviour.");
-                }
                 _runtime = new RilsRuntime();
-                byte[] hostManifest = _script.GetHostManifest();
+                byte[] hostManifest = _entry.GetHostManifest();
                 if (hostManifest.Length != 0)
                 {
                     _runtime.RegisterHostManifest(hostManifest);
@@ -72,7 +47,7 @@ namespace Rils.Unity
                 _hosts.AllowCapability("unity.transform");
                 _hosts.AllowCapability("unity.component");
                 _hosts.Freeze();
-                _module = _runtime.LoadBytecode(_script.GetBytecode());
+                _module = _runtime.LoadBytecode(_entry.GetBytecode());
                 _module.ValidateHost();
                 _instance = _module.CreateInstance();
                 InvokeIfPresent(RilsLifecycleFlags.Awake, "awake");
@@ -124,7 +99,7 @@ namespace Rils.Unity
         }
 
         private bool Has(RilsLifecycleFlags flag) =>
-            _script != null && (_script.LifecycleFlags & flag) != 0;
+            _entry != null && (_entry.LifecycleFlags & flag) != 0;
 
         private void Fail(string functionName, Exception exception)
         {

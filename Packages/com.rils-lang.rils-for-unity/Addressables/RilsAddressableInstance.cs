@@ -32,11 +32,11 @@ namespace Rils.Unity.Addressables
                 throw new ArgumentNullException(nameof(key));
             }
 
-            AsyncOperationHandle<RilsBytecodeAsset> handle =
-                UnityEngine.AddressableAssets.Addressables.LoadAssetAsync<RilsBytecodeAsset>(key);
+            AsyncOperationHandle<RilsEntryAsset> handle =
+                UnityEngine.AddressableAssets.Addressables.LoadAssetAsync<RilsEntryAsset>(key);
             try
             {
-                RilsBytecodeAsset asset = await handle.Task;
+                RilsEntryAsset asset = await handle.Task;
                 if (handle.Status != AsyncOperationStatus.Succeeded || asset == null)
                 {
                     throw handle.OperationException ??

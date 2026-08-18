@@ -15,7 +15,7 @@ namespace Rils.Unity.Editor
         private static void ConfigureSelectedBytecodeAddressable()
         {
             UnityEngine.Object selected = Selection.activeObject;
-            string assetPath = selected is RilsBytecodeAsset
+            string assetPath = selected is RilsEntryAsset
                 ? AssetDatabase.GetAssetPath(selected)
                 : string.Empty;
             string guid = string.IsNullOrEmpty(assetPath)
@@ -24,7 +24,7 @@ namespace Rils.Unity.Editor
             if (string.IsNullOrEmpty(guid))
             {
                 throw new System.InvalidOperationException(
-                    "Select a RilsBytecodeAsset before configuring an Addressable.");
+                    "Select a RilsEntryAsset before configuring an Addressable.");
             }
 
             AddressableAssetSettings settings =
@@ -44,7 +44,7 @@ namespace Rils.Unity.Editor
 
             settings.AddLabel(LabelName);
             AddressableAssetEntry entry = settings.CreateOrMoveEntry(guid, group, false, false);
-            entry.address = assetPath;
+            entry.address = assetPath + "[" + selected.name + "]";
             entry.SetLabel(LabelName, true, true, false);
             settings.SetDirty(AddressableAssetSettings.ModificationEvent.EntryModified, entry, true);
             AssetDatabase.SaveAssets();

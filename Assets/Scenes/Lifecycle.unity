@@ -166,7 +166,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6dcce6a331eb79b43ae525759aa2d3b0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _script: {fileID: -2347012351241367355, guid: 026a24038ee0362498c5a6665428a7f0, type: 3}
+  _entry: {fileID: 5241848216710379791, guid: 026a24038ee0362498c5a6665428a7f0, type: 3}
   _disableOnError: 1
 --- !u!1660057539 &9223372036854775807
 SceneRoots:

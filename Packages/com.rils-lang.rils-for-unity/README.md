@@ -65,8 +65,7 @@ Create scripts from the Project window with `Assets > Create > Rils > Empty Scri
 flow; the behaviour template derives its Rils type name from the chosen file name.
 
 ```rils
-use crate::rils_for_unity::behaviour::RilsBehaviour;
-
+#[derive(Default)]
 pub struct PlayerBehaviour { }
 
 impl RilsBehaviour for PlayerBehaviour {
@@ -81,10 +80,10 @@ The `HostHandle` identifies the owning
 GameObject for the lifetime of that runtime instance; it becomes invalid when
 the component is destroyed.
 
-The current first pass establishes the `RilsScriptAsset`/`RilsEntryAsset` import and selection
-model. Persistently constructing the selected behaviour state and dispatching lifecycle calls by
-trait-method identity still requires bytecode metadata and runtime instance support; an entry ID is
-not treated as an executable string lookup.
+The importer discovers entries from verified bytecode trait metadata rather than source text and
+filters them by declaring source, so each main asset owns only the entries declared in that `.rils` file.
+At runtime the selected entry is constructed through `Default::default()`, retained as one opaque
+Rils value for the component lifetime, and invoked through `RilsBehaviour` trait-method identity.
 
 The first manual Unity host surface is available through these modules:
 

@@ -16,6 +16,7 @@ namespace Rils.Unity
         private RilsHostRegistry? _hosts;
         private RilsModule? _module;
         private RilsInstance? _instance;
+        private RilsScriptValue? _state;
         private UnityObjectHandleTable? _handles;
         private RilsObjectHandle _selfHandle;
         private bool _destroyed;
@@ -50,6 +51,7 @@ namespace Rils.Unity
                 _module = _runtime.LoadBytecode(_entry.GetBytecode());
                 _module.ValidateHost();
                 _instance = _module.CreateInstance();
+                _state = _instance.CreateDefaultValue(_entry.EntryId);
                 InvokeIfPresent(RilsLifecycleFlags.Awake, "awake");
             }
             catch (Exception exception)
@@ -62,10 +64,14 @@ namespace Rils.Unity
 
         private void Update()
         {
-            if (!Has(RilsLifecycleFlags.Update) || _instance == null) return;
+            if (!Has(RilsLifecycleFlags.Update) || _state == null) return;
             try
             {
-                _instance.Call("update", RilsValue.From(_selfHandle), RilsValue.From(Time.deltaTime));
+                _state.CallTrait(
+                    "RilsBehaviour",
+                    "update",
+                    RilsValue.From(_selfHandle),
+                    RilsValue.From(Time.deltaTime));
             }
             catch (Exception exception)
             {
@@ -78,6 +84,7 @@ namespace Rils.Unity
             if (_destroyed) return;
             InvokeIfPresent(RilsLifecycleFlags.OnDestroy, "on_destroy");
             _destroyed = true;
+            _state?.Dispose();
             _instance?.Dispose();
             _module?.Dispose();
             _runtime?.Dispose();
@@ -87,10 +94,13 @@ namespace Rils.Unity
 
         private void InvokeIfPresent(RilsLifecycleFlags flag, string functionName)
         {
-            if (!Has(flag) || _instance == null || _destroyed) return;
+            if (!Has(flag) || _state == null || _destroyed) return;
             try
             {
-                _instance.Call(functionName, RilsValue.From(_selfHandle));
+                _state.CallTrait(
+                    "RilsBehaviour",
+                    functionName,
+                    RilsValue.From(_selfHandle));
             }
             catch (Exception exception)
             {

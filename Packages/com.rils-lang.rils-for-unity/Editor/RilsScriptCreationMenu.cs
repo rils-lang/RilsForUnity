@@ -158,6 +158,7 @@ namespace Rils.Unity.Editor
         {
             return string.Join("\n", new[]
             {
+                "#[derive(Default)]",
                 $"pub struct {typeName};",
                 string.Empty,
                 $"impl RilsBehaviour for {typeName} {{",

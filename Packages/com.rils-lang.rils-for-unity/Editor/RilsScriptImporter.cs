@@ -17,10 +17,6 @@ namespace Rils.Unity.Editor
             @"^\s*mod\s+([A-Za-z_][A-Za-z0-9_]*)\s*;",
             RegexOptions.Compiled | RegexOptions.Multiline | RegexOptions.CultureInvariant);
 
-        private static readonly Regex BehaviourImplementation = new Regex(
-            @"\bimpl\s+RilsBehaviour\s+for\s+([A-Za-z_][A-Za-z0-9_]*)\b",
-            RegexOptions.Compiled | RegexOptions.CultureInvariant);
-
         public override void OnImportAsset(AssetImportContext context)
         {
             string fullPath = Path.GetFullPath(context.assetPath);
@@ -28,7 +24,6 @@ namespace Rils.Unity.Editor
 
             try
             {
-                string source = File.ReadAllText(fullPath, Encoding.UTF8);
                 List<byte[]> hostManifestFragments = ReadHostManifestFragments();
                 var runtime = new RilsRuntime();
                 RilsHostRegistry? hosts = null;
@@ -60,7 +55,9 @@ namespace Rils.Unity.Editor
                         context.AddObjectToAsset("script", script);
                         context.SetMainObject(script);
 
-                        foreach (string entryId in ReadBehaviourTypes(source))
+                        foreach (string entryId in module.GetTraitImplementations(
+                                     "RilsBehaviour",
+                                     fullPath))
                         {
                             var entry = ScriptableObject.CreateInstance<RilsEntryAsset>();
                             entry.name = entryId;
@@ -94,16 +91,6 @@ namespace Rils.Unity.Editor
                 .OrderBy(path => path, StringComparer.OrdinalIgnoreCase)
                 .Select(File.ReadAllBytes)
                 .ToList();
-        }
-
-        private static IReadOnlyList<string> ReadBehaviourTypes(string source)
-        {
-            return BehaviourImplementation.Matches(source)
-                .Cast<Match>()
-                .Select(match => match.Groups[1].Value)
-                .Distinct(StringComparer.Ordinal)
-                .OrderBy(name => name, StringComparer.Ordinal)
-                .ToArray();
         }
 
         private static void RegisterModuleDependencies(

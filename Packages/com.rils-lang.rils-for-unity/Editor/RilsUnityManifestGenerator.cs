@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using Rils.CSharp;
 using RilsForUnity;
@@ -11,7 +12,8 @@ namespace Rils.Unity.Editor
     /// imported as a Unity asset or accidentally shipped as project content.
     internal static class RilsUnityManifestGenerator
     {
-        private const string RelativeManifestPath = ".rils/manifest/unity.object.rilhm";
+        private const string RelativeManifestDirectory = ".rils/manifest/unity-engine";
+        private const string LegacyManifestPath = ".rils/manifest/unity.object.rilhm";
         private static bool _validationScheduled;
 
         [InitializeOnLoadMethod]
@@ -30,17 +32,14 @@ namespace Rils.Unity.Editor
             _validationScheduled = false;
             try
             {
-                byte[] expected = BuildManifest();
-                string manifestPath = ManifestPath();
-                if (File.Exists(manifestPath)
-                    && ContentsEqual(File.ReadAllBytes(manifestPath), expected))
+                IReadOnlyDictionary<string, byte[]> expected = BuildManifests();
+                if (!SynchronizeManifests(expected))
                 {
                     return;
                 }
-
-                WriteManifestAtomically(manifestPath, expected);
                 ReimportRilsAssets();
-                Debug.Log($"Regenerated missing, damaged, or outdated Rils Unity host manifest: {RelativeManifestPath}");
+                Debug.Log(
+                    $"Regenerated {expected.Count} missing, damaged, or outdated Rils Unity host manifest modules under {RelativeManifestDirectory}.");
             }
             catch (Exception exception)
             {
@@ -53,14 +52,62 @@ namespace Rils.Unity.Editor
         {
             try
             {
-                WriteManifestAtomically(ManifestPath(), BuildManifest());
+                IReadOnlyDictionary<string, byte[]> expected = BuildManifests();
+                SynchronizeManifests(expected, forceWrite: true);
                 ReimportRilsAssets();
-                Debug.Log($"Generated Rils Unity host manifest: {RelativeManifestPath}");
+                Debug.Log(
+                    $"Generated {expected.Count} Rils Unity host manifest modules under {RelativeManifestDirectory}.");
             }
             catch (Exception exception)
             {
                 Debug.LogException(exception);
             }
+        }
+
+        private static bool SynchronizeManifests(
+            IReadOnlyDictionary<string, byte[]> expected,
+            bool forceWrite = false)
+        {
+            bool changed = false;
+            string projectRoot = ProjectRoot();
+            string manifestDirectory = Path.Combine(projectRoot, RelativeManifestDirectory);
+            var expectedPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (KeyValuePair<string, byte[]> fragment in expected)
+            {
+                string manifestPath = Path.GetFullPath(Path.Combine(projectRoot, fragment.Key));
+                expectedPaths.Add(manifestPath);
+                if (!forceWrite && File.Exists(manifestPath) &&
+                    ContentsEqual(File.ReadAllBytes(manifestPath), fragment.Value))
+                {
+                    continue;
+                }
+                WriteManifestAtomically(manifestPath, fragment.Value);
+                changed = true;
+            }
+
+            if (Directory.Exists(manifestDirectory))
+            {
+                foreach (string existing in Directory.GetFiles(
+                    manifestDirectory,
+                    "*.rilhm",
+                    SearchOption.AllDirectories))
+                {
+                    string fullPath = Path.GetFullPath(existing);
+                    if (!expectedPaths.Contains(fullPath))
+                    {
+                        File.Delete(fullPath);
+                        changed = true;
+                    }
+                }
+            }
+
+            string legacyPath = Path.Combine(projectRoot, LegacyManifestPath);
+            if (File.Exists(legacyPath))
+            {
+                File.Delete(legacyPath);
+                changed = true;
+            }
+            return changed;
         }
 
         private static void WriteManifestAtomically(string manifestPath, byte[] manifest)
@@ -110,19 +157,23 @@ namespace Rils.Unity.Editor
             return true;
         }
 
-        private static byte[] BuildManifest()
+        private static IReadOnlyDictionary<string, byte[]> BuildManifests()
         {
-            using (var runtime = new RilsRuntime())
-            using (var handles = new UnityObjectHandleTable())
-            using (var hosts = new RilsHostRegistry(runtime))
+            var fragments = new Dictionary<string, byte[]>(StringComparer.Ordinal);
+            foreach (UnityHostBindingModule module in UnityEngineBindingCatalog.Modules)
             {
-                UnityObjectHostBindings.Register(hosts, handles);
-                hosts.AllowCapability("unity.object");
-                hosts.AllowCapability("unity.game_object");
-                hosts.AllowCapability("unity.transform");
-                hosts.AllowCapability("unity.component");
-                return runtime.GetHostManifest();
+                const string prefix = "unity_engine::";
+                string moduleName = module.Descriptor.Name;
+                if (!moduleName.StartsWith(prefix, StringComparison.Ordinal))
+                {
+                    throw new InvalidOperationException(
+                        $"UnityEngine host module '{moduleName}' does not use the '{prefix}' prefix.");
+                }
+                string relativeModule = moduleName.Substring(prefix.Length).Replace("::", "/");
+                string relativePath = $"{RelativeManifestDirectory}/{relativeModule}.rilhm";
+                fragments.Add(relativePath, RilsHostManifestBuilder.Build(module.Descriptor));
             }
+            return fragments;
         }
 
         private static void ReimportRilsAssets()
@@ -143,11 +194,6 @@ namespace Rils.Unity.Editor
         private static string ProjectRoot()
         {
             return Path.GetFullPath(Path.Combine(Application.dataPath, ".."));
-        }
-
-        private static string ManifestPath()
-        {
-            return Path.Combine(ProjectRoot(), ".rils", "manifest", "unity.object.rilhm");
         }
     }
 }

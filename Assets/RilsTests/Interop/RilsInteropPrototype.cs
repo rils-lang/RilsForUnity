@@ -60,9 +60,10 @@ namespace RilsForUnity.Tests
                     }
                     return RilsValue.From(handle);
                 }));
-            UnityObjectHostBindings.Register(_hosts, _handles);
+            UnityEngineBindingCatalog.RegisterAll(_hosts, _handles);
             _hosts.AllowCapability("unity.math");
             _hosts.AllowCapability("unity.object");
+            UnityEngineBindingCatalog.AllowAllCapabilities(_hosts);
             _hosts.Freeze();
 
             _module = _runtime.Compile(@"
@@ -77,10 +78,16 @@ namespace RilsForUnity.Tests
                     unity::object::echo_handle(handle)
                 }
                 pub fn is_valid(handle: HostHandle) -> bool {
-                    unity::object::is_valid(handle)
+                    unity_engine::object::is_valid(handle)
                 }
                 pub fn instance_id(handle: HostHandle) -> i64 {
-                    unity::object::instance_id(handle)
+                    unity_engine::object::instance_id(handle)
+                }
+                pub fn host_delta_time() -> f32 {
+                    unity_engine::time::delta_time()
+                }
+                pub fn host_frame_count() -> i32 {
+                    unity_engine::time::frame_count()
                 }
             ", "M0Interop.rils");
             _module.ValidateHost();
@@ -97,6 +104,8 @@ namespace RilsForUnity.Tests
             }
             bool isValid = _instance.Call("is_valid", RilsValue.From(echoedHandle)).AsBool();
             long instanceId = _instance.Call("instance_id", RilsValue.From(echoedHandle)).AsI64();
+            float hostDeltaTime = _instance.Call("host_delta_time").AsF32();
+            int hostFrameCount = _instance.Call("host_frame_count").AsI32();
             if (!isValid || instanceId != gameObject.GetInstanceID())
             {
                 throw new InvalidOperationException("Unity object query binding failed.");
@@ -104,6 +113,7 @@ namespace RilsForUnity.Tests
             Debug.Log($"RilsForUnity M0 interop: C# -> Rils = {fromRils}, Rils -> C# = {fromHost}");
             Debug.Log($"RilsForUnity host handle round-trip: object={echoedHandle.ObjectId}");
             Debug.Log($"RilsForUnity object query: valid={isValid}, instance_id={instanceId}");
+            Debug.Log($"RilsForUnity time query: delta_time={hostDeltaTime}, frame_count={hostFrameCount}");
         }
 
         private void OnDestroy()

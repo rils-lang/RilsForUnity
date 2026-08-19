@@ -42,11 +42,8 @@ namespace Rils.Unity
                 _handles = new UnityObjectHandleTable();
                 _selfHandle = _handles.Acquire(gameObject);
                 _hosts = new RilsHostRegistry(_runtime);
-                UnityObjectHostBindings.Register(_hosts, _handles);
-                _hosts.AllowCapability("unity.object");
-                _hosts.AllowCapability("unity.game_object");
-                _hosts.AllowCapability("unity.transform");
-                _hosts.AllowCapability("unity.component");
+                UnityEngineBindingCatalog.RegisterAll(_hosts, _handles);
+                UnityEngineBindingCatalog.AllowAllCapabilities(_hosts);
                 _hosts.Freeze();
                 _module = _runtime.LoadBytecode(_entry.GetBytecode());
                 _module.ValidateHost();

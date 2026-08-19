@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using Rils.CSharp;
+using RilsForUnity;
 using UnityEditor.AssetImporters;
 using UnityEngine;
 
@@ -36,10 +37,7 @@ namespace Rils.Unity.Editor
                         {
                             runtime.RegisterHostManifest(fragment);
                         }
-                        runtime.AllowCapability("unity.object");
-                        runtime.AllowCapability("unity.game_object");
-                        runtime.AllowCapability("unity.transform");
-                        runtime.AllowCapability("unity.component");
+                        UnityEngineBindingCatalog.AllowAllCapabilities(runtime);
                         runtime.FreezeHostRegistry();
                     }
                     using (RilsModule module = runtime.CompileFile(fullPath))

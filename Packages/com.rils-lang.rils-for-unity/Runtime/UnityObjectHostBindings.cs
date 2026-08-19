@@ -5,179 +5,185 @@ using UnityEngine;
 
 namespace RilsForUnity
 {
-    /// Registers the first host-neutral object queries backed by Unity handles.
+    /// Defines the first typed UnityEngine object modules. Logical object types
+    /// currently lower to HostHandle in manifest v1 while remaining available to
+    /// the binding model for a future nominal host-type manifest.
     public static class UnityObjectHostBindings
     {
-        public static void Register(RilsHostRegistry registry, UnityObjectHandleTable handles)
+        private static readonly RilsHostParameter ObjectType =
+            RilsHostParameter.NamedHandle("unity_engine::Object");
+        private static readonly RilsHostParameter GameObjectType =
+            RilsHostParameter.NamedHandle("unity_engine::GameObject");
+        private static readonly RilsHostParameter ComponentType =
+            RilsHostParameter.NamedHandle("unity_engine::Component");
+        private static readonly RilsHostParameter TransformType =
+            RilsHostParameter.NamedHandle("unity_engine::Transform");
+
+        /// Retained for host applications that registered the prototype object
+        /// bindings directly. New hosts should register the complete catalog.
+        public static void Register(
+            RilsHostRegistry registry,
+            UnityObjectHandleTable handles)
         {
             if (registry == null) throw new ArgumentNullException(nameof(registry));
             if (handles == null) throw new ArgumentNullException(nameof(handles));
-
-            registry.Register(new RilsHostFunction(
-                103,
-                "unity::object::is_valid",
-                "unity.object",
-                new RilsHostParameter(RilsValueTag.Bool),
-                new[] { new RilsHostParameter(RilsValueTag.HostHandle, RilsHostTransferMode.Handle) },
-                arguments =>
-                {
-                    RilsObjectHandle handle = arguments[0].AsHostHandle(handles.SessionId);
-                    return RilsValue.From(handles.TryResolve<UnityEngine.Object>(handle, out _));
-                },
-                receiver: RilsHostReceiver.RefSelf));
-
-            registry.Register(new RilsHostFunction(
-                104,
-                "unity::object::instance_id",
-                "unity.object",
-                new RilsHostParameter(RilsValueTag.I64),
-                new[] { new RilsHostParameter(RilsValueTag.HostHandle, RilsHostTransferMode.Handle) },
-                arguments =>
-                {
-                    RilsObjectHandle handle = arguments[0].AsHostHandle(handles.SessionId);
-                    if (!handles.TryResolve<UnityEngine.Object>(handle, out UnityEngine.Object? target))
-                    {
-                        throw new RilsHostException(new RilsHostError(
-                            RilsHostErrorCode.ObjectDestroyed,
-                            "The Unity object handle is no longer valid."));
-                    }
-                    return RilsValue.From((long)target.GetInstanceID());
-                },
-                receiver: RilsHostReceiver.RefSelf));
-
-            registry.Register(new RilsHostFunction(
-                105,
-                "unity::game_object::active_self",
-                "unity.game_object",
-                new RilsHostParameter(RilsValueTag.Bool),
-                new[] { new RilsHostParameter(RilsValueTag.HostHandle, RilsHostTransferMode.Handle) },
-                arguments =>
-                {
-                    RilsObjectHandle handle = arguments[0].AsHostHandle(handles.SessionId);
-                    if (!handles.TryResolve<GameObject>(handle, out GameObject? target))
-                    {
-                        throw new RilsHostException(new RilsHostError(
-                            RilsHostErrorCode.ObjectDestroyed,
-                            "The GameObject handle is no longer valid."));
-                    }
-                    return RilsValue.From(target.activeSelf);
-                },
-                receiver: RilsHostReceiver.RefSelf));
-
-            registry.Register(new RilsHostFunction(
-                106,
-                "unity::game_object::set_active",
-                "unity.game_object",
-                new RilsHostParameter(RilsValueTag.Unit),
-                new[]
-                {
-                    new RilsHostParameter(RilsValueTag.HostHandle, RilsHostTransferMode.Handle),
-                    new RilsHostParameter(RilsValueTag.Bool),
-                },
-                arguments =>
-                {
-                    RilsObjectHandle handle = arguments[0].AsHostHandle(handles.SessionId);
-                    if (!handles.TryResolve<GameObject>(handle, out GameObject? target))
-                    {
-                        throw new RilsHostException(new RilsHostError(
-                            RilsHostErrorCode.ObjectDestroyed,
-                            "The GameObject handle is no longer valid."));
-                    }
-                    target.SetActive(arguments[1].AsBool());
-                    return RilsValue.Unit;
-                },
-                receiver: RilsHostReceiver.RefMutSelf));
-
-            registry.Register(new RilsHostFunction(
-                107,
-                "unity::game_object::transform",
-                "unity.game_object",
-                new RilsHostParameter(RilsValueTag.HostHandle, RilsHostTransferMode.Handle),
-                new[] { new RilsHostParameter(RilsValueTag.HostHandle, RilsHostTransferMode.Handle) },
-                arguments =>
-                {
-                    RilsObjectHandle handle = arguments[0].AsHostHandle(handles.SessionId);
-                    if (!handles.TryResolve<GameObject>(handle, out GameObject? target))
-                    {
-                        throw new RilsHostException(new RilsHostError(
-                            RilsHostErrorCode.ObjectDestroyed,
-                            "The GameObject handle is no longer valid."));
-                    }
-                    return RilsValue.From(handles.Acquire(target.transform));
-                },
-                receiver: RilsHostReceiver.RefSelf));
-
-            RegisterTransformCoordinate(registry, handles, 108, "x", value => value.x);
-            RegisterTransformCoordinate(registry, handles, 109, "y", value => value.y);
-            RegisterTransformCoordinate(registry, handles, 110, "z", value => value.z);
-
-            registry.Register(new RilsHostFunction(
-                111,
-                "unity::transform::set_position",
-                "unity.transform",
-                new RilsHostParameter(RilsValueTag.Unit),
-                new[]
-                {
-                    new RilsHostParameter(RilsValueTag.HostHandle, RilsHostTransferMode.Handle),
-                    new RilsHostParameter(RilsValueTag.F32),
-                    new RilsHostParameter(RilsValueTag.F32),
-                    new RilsHostParameter(RilsValueTag.F32),
-                },
-                arguments =>
-                {
-                    Transform target = ResolveTransform(handles, arguments[0]);
-                    target.position = new Vector3(
-                        arguments[1].AsF32(), arguments[2].AsF32(), arguments[3].AsF32());
-                    return RilsValue.Unit;
-                },
-                receiver: RilsHostReceiver.RefMutSelf));
-
-            registry.Register(new RilsHostFunction(
-                112,
-                "unity::component::game_object",
-                "unity.component",
-                new RilsHostParameter(RilsValueTag.HostHandle, RilsHostTransferMode.Handle),
-                new[] { new RilsHostParameter(RilsValueTag.HostHandle, RilsHostTransferMode.Handle) },
-                arguments =>
-                {
-                    RilsObjectHandle handle = arguments[0].AsHostHandle(handles.SessionId);
-                    if (!handles.TryResolve<Component>(handle, out Component? target))
-                    {
-                        throw new RilsHostException(new RilsHostError(
-                            RilsHostErrorCode.ObjectDestroyed,
-                            "The Component handle is no longer valid."));
-                    }
-                    return RilsValue.From(handles.Acquire(target.gameObject));
-                },
-                receiver: RilsHostReceiver.RefSelf));
+            UnityHostBindingModule[] modules = CreateModules();
+            for (int index = 0; index < modules.Length; index++)
+            {
+                modules[index].Register(registry, handles);
+            }
         }
 
-        private static void RegisterTransformCoordinate(
-            RilsHostRegistry registry,
-            UnityObjectHandleTable handles,
-            ulong functionId,
+        internal static UnityHostBindingModule[] CreateModules()
+        {
+            return new[]
+            {
+                CreateObjectModule(),
+                CreateGameObjectModule(),
+                CreateComponentModule(),
+                CreateTransformModule(),
+            };
+        }
+
+        private static UnityHostBindingModule CreateObjectModule()
+        {
+            const string capability = "unity_engine.object";
+            return new UnityHostBindingModule(
+                "unity_engine::object",
+                new UnityHostFunctionBinding(
+                    "UnityEngine.CoreModule:UnityEngine.Object.op_Implicit(UnityEngine.Object):System.Boolean",
+                    "unity_engine::object::is_valid",
+                    capability,
+                    new RilsHostParameter(RilsValueTag.Bool),
+                    new[] { ObjectType },
+                    (handles, arguments) =>
+                    {
+                        RilsObjectHandle handle = arguments[0].AsHostHandle(handles.SessionId);
+                        return RilsValue.From(handles.TryResolve<UnityEngine.Object>(handle, out _));
+                    },
+                    RilsHostReceiver.RefSelf),
+                new UnityHostFunctionBinding(
+                    "UnityEngine.CoreModule:UnityEngine.Object.GetInstanceID():System.Int32",
+                    "unity_engine::object::instance_id",
+                    capability,
+                    new RilsHostParameter(RilsValueTag.I64),
+                    new[] { ObjectType },
+                    (handles, arguments) =>
+                    {
+                        UnityEngine.Object target = Resolve<UnityEngine.Object>(handles, arguments[0]);
+                        return RilsValue.From((long)target.GetInstanceID());
+                    },
+                    RilsHostReceiver.RefSelf));
+        }
+
+        private static UnityHostBindingModule CreateGameObjectModule()
+        {
+            const string capability = "unity_engine.game_object";
+            return new UnityHostBindingModule(
+                "unity_engine::game_object",
+                new UnityHostFunctionBinding(
+                    "UnityEngine.CoreModule:UnityEngine.GameObject.get_activeSelf():System.Boolean",
+                    "unity_engine::game_object::active_self",
+                    capability,
+                    new RilsHostParameter(RilsValueTag.Bool),
+                    new[] { GameObjectType },
+                    (handles, arguments) => RilsValue.From(
+                        Resolve<GameObject>(handles, arguments[0]).activeSelf),
+                    RilsHostReceiver.RefSelf),
+                new UnityHostFunctionBinding(
+                    "UnityEngine.CoreModule:UnityEngine.GameObject.SetActive(System.Boolean):System.Void",
+                    "unity_engine::game_object::set_active",
+                    capability,
+                    new RilsHostParameter(RilsValueTag.Unit),
+                    new[] { GameObjectType, new RilsHostParameter(RilsValueTag.Bool) },
+                    (handles, arguments) =>
+                    {
+                        Resolve<GameObject>(handles, arguments[0]).SetActive(arguments[1].AsBool());
+                        return RilsValue.Unit;
+                    },
+                    RilsHostReceiver.RefMutSelf),
+                new UnityHostFunctionBinding(
+                    "UnityEngine.CoreModule:UnityEngine.GameObject.get_transform():UnityEngine.Transform",
+                    "unity_engine::game_object::transform",
+                    capability,
+                    TransformType,
+                    new[] { GameObjectType },
+                    (handles, arguments) => RilsValue.From(
+                        handles.Acquire(Resolve<GameObject>(handles, arguments[0]).transform)),
+                    RilsHostReceiver.RefSelf));
+        }
+
+        private static UnityHostBindingModule CreateComponentModule()
+        {
+            const string capability = "unity_engine.component";
+            return new UnityHostBindingModule(
+                "unity_engine::component",
+                new UnityHostFunctionBinding(
+                    "UnityEngine.CoreModule:UnityEngine.Component.get_gameObject():UnityEngine.GameObject",
+                    "unity_engine::component::game_object",
+                    capability,
+                    GameObjectType,
+                    new[] { ComponentType },
+                    (handles, arguments) => RilsValue.From(
+                        handles.Acquire(Resolve<Component>(handles, arguments[0]).gameObject)),
+                    RilsHostReceiver.RefSelf));
+        }
+
+        private static UnityHostBindingModule CreateTransformModule()
+        {
+            const string capability = "unity_engine.transform";
+            return new UnityHostBindingModule(
+                "unity_engine::transform",
+                TransformCoordinate("x", value => value.x),
+                TransformCoordinate("y", value => value.y),
+                TransformCoordinate("z", value => value.z),
+                new UnityHostFunctionBinding(
+                    "UnityEngine.CoreModule:UnityEngine.Transform.set_position(UnityEngine.Vector3):System.Void",
+                    "unity_engine::transform::set_position",
+                    capability,
+                    new RilsHostParameter(RilsValueTag.Unit),
+                    new[]
+                    {
+                        TransformType,
+                        new RilsHostParameter(RilsValueTag.F32),
+                        new RilsHostParameter(RilsValueTag.F32),
+                        new RilsHostParameter(RilsValueTag.F32),
+                    },
+                    (handles, arguments) =>
+                    {
+                        Resolve<Transform>(handles, arguments[0]).position = new Vector3(
+                            arguments[1].AsF32(),
+                            arguments[2].AsF32(),
+                            arguments[3].AsF32());
+                        return RilsValue.Unit;
+                    },
+                    RilsHostReceiver.RefMutSelf));
+        }
+
+        private static UnityHostFunctionBinding TransformCoordinate(
             string name,
             Func<Vector3, float> getter)
         {
-            registry.Register(new RilsHostFunction(
-                functionId,
-                $"unity::transform::position_{name}",
-                "unity.transform",
+            return new UnityHostFunctionBinding(
+                $"UnityEngine.CoreModule:UnityEngine.Transform.get_position().{name}:System.Single",
+                $"unity_engine::transform::position_{name}",
+                "unity_engine.transform",
                 new RilsHostParameter(RilsValueTag.F32),
-                new[] { new RilsHostParameter(RilsValueTag.HostHandle, RilsHostTransferMode.Handle) },
-                arguments => getter(ResolveTransform(handles, arguments[0]).position),
-                receiver: RilsHostReceiver.RefSelf));
+                new[] { TransformType },
+                (handles, arguments) => getter(Resolve<Transform>(handles, arguments[0]).position),
+                RilsHostReceiver.RefSelf);
         }
 
-        private static Transform ResolveTransform(
+        private static T Resolve<T>(
             UnityObjectHandleTable handles,
             RilsValue value)
+            where T : UnityEngine.Object
         {
             RilsObjectHandle handle = value.AsHostHandle(handles.SessionId);
-            if (handles.TryResolve<Transform>(handle, out Transform? target)) return target;
+            if (handles.TryResolve<T>(handle, out T? target)) return target!;
             throw new RilsHostException(new RilsHostError(
                 RilsHostErrorCode.ObjectDestroyed,
-                "The Transform handle is no longer valid."));
+                $"The Unity {typeof(T).Name} handle is no longer valid."));
         }
     }
 }

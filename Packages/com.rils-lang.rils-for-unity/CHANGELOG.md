@@ -2,6 +2,9 @@
 
 ## [0.1.0] - Unreleased
 
+- Replaced the prototype Unity host registration list with a shared Binding IR. The Editor now
+  generates independent `unity_engine` manifest fragments from immutable descriptors, while the
+  Player binds the same stable IDs to direct C# handlers. Added the initial `unity_engine::time` API.
 - `RilsBehaviour` now requires `Default`; generated behaviour scripts derive it automatically, and imports reject entry types that do not satisfy the constraint.
 - Entry assets are now discovered from verified bytecode trait metadata. Runtime components construct the selected entry with `Default::default()` and dispatch lifecycle calls to one persistent opaque Rils value instead of calling same-named module functions.
 - Project imports now filter trait entries by their declaring source file, so each `.rils` main asset owns only its own `RilsBehaviour` sub-assets.
@@ -24,7 +27,7 @@
 - Added the C# runtime facade and Windows x86_64 native plugin hook.
 - Added the M0 synchronous scalar interop bridge; the Unity project contains its validation case.
 - Added the session-bound Unity object handle table used by the interop validation scene.
-- Added initial `unity::object::is_valid` and `unity::object::instance_id` bindings.
+- Added Unity object validity and instance ID host bindings.
 - Added `RilsBehaviour` asset binding with optional `awake`, `start`, `update`, and `on_destroy` callbacks.
 - Added generated `.rils/manifest/` Unity manifest workflow and embedded merged manifest data in bytecode assets.
 - Added Addressables runtime loading support.

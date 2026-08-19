@@ -6,7 +6,7 @@ This package integrates the Rils runtime with Unity 2022.3 LTS and later in the
 - the host-neutral `Rils.CSharp` facade and native plugin location;
 - a synchronous scalar host bridge for the first C# ↔ Rils interop prototype;
 - a session-bound `UnityObjectHandleTable` for Unity-side opaque object identity;
-- initial `unity::object::is_valid` and `unity::object::instance_id` host bindings;
+- descriptor-backed `unity_engine` object, component, transform, and time host modules;
 - a `ScriptedImporter` for `.rils` source assets;
 - `RilsScriptAsset` for each imported source and `RilsEntryAsset` sub-assets for each detected
   `RilsBehaviour` implementation;
@@ -85,25 +85,27 @@ filters them by declaring source, so each main asset owns only the entries decla
 At runtime the selected entry is constructed through `Default::default()`, retained as one opaque
 Rils value for the component lifetime, and invoked through `RilsBehaviour` trait-method identity.
 
-The first manual Unity host surface is available through these modules:
+The first UnityEngine binding catalog is available through these modules:
 
-- `unity::object`: validity and instance ID checks.
-- `unity::game_object`: active-state queries, activation changes, and `Transform` lookup.
-- `unity::transform`: position component queries and position updates.
-- `unity::component`: lookup of the owning `GameObject`.
+- `unity_engine::object`: validity and instance ID checks.
+- `unity_engine::game_object`: active-state queries, activation changes, and `Transform` lookup.
+- `unity_engine::transform`: position component queries and position updates.
+- `unity_engine::component`: lookup of the owning `GameObject`.
+- `unity_engine::time`: delta time, fixed delta time, elapsed time, and frame count.
 
-These bindings intentionally use opaque `HostHandle` values and scalar arguments only. String,
-struct, collection, and general reflection-based exports are reserved for a later compatible
-binding layer.
+Each catalog module owns immutable function descriptors with deterministic IDs and separate static
+handlers. The Editor serializes descriptors without executing handlers; the Player binds those same
+descriptors to direct C# calls, keeping the path AOT/IL2CPP friendly. Logical Unity object type names
+are retained in the binding model, while manifest v1 intentionally lowers them to opaque `HostHandle`
+transport. String, value-struct, collection, and general project API exports require later ABI work.
 
 ## Host manifests
 
-When the Editor loads, RilsForUnity compares `.rils/manifest/unity.object.rilhm`
-with the manifest generated from the current Unity host bindings. A missing,
-damaged, or outdated file is atomically regenerated and `.rils` assets are
-reimported automatically. `Rils > Generate Unity Host Manifest` remains available
-as an explicit force-regenerate command. Other modules can add independent
-`.rilhm` fragments to the same directory. Player builds do not need the project
+When the Editor loads, RilsForUnity synchronizes one fragment per catalog module under
+`.rils/manifest/unity-engine/`. Missing, damaged, outdated, and stale owned fragments are updated
+atomically and `.rils` assets are reimported automatically. `Rils > Generate Unity Host Manifest`
+remains available as an explicit force-regenerate command. Project modules can add independent
+`.rilhm` fragments outside the owned `unity-engine` directory. Player builds do not need the project
 source directory; generated manifest files are ignored by the integration repository.
 
 ## Rils library artifacts

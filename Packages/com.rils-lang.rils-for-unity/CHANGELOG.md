@@ -5,6 +5,7 @@
 - `RilsBehaviour` now requires `Default`; generated behaviour scripts derive it automatically, and imports reject entry types that do not satisfy the constraint.
 - Entry assets are now discovered from verified bytecode trait metadata. Runtime components construct the selected entry with `Default::default()` and dispatch lifecycle calls to one persistent opaque Rils value instead of calling same-named module functions.
 - Project imports now filter trait entries by their declaring source file, so each `.rils` main asset owns only its own `RilsBehaviour` sub-assets.
+- Entry sub-assets now display only their unqualified type name while retaining the complete entry ID for runtime lookup and stable asset identity.
 - Replaced the public bytecode asset model with a `RilsScriptAsset` main asset and one
   `RilsEntryAsset` sub-asset per detected `RilsBehaviour` implementation.
 - Added `.rilslib` importing as `RilsLibraryAsset` while keeping source packages as the default

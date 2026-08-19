@@ -10,7 +10,7 @@ using UnityEngine;
 
 namespace Rils.Unity.Editor
 {
-    [ScriptedImporter(1, "rils")]
+    [ScriptedImporter(2, "rils")]
     internal sealed class RilsScriptImporter : ScriptedImporter
     {
         private static readonly Regex ModuleDeclaration = new Regex(
@@ -60,7 +60,7 @@ namespace Rils.Unity.Editor
                                      fullPath))
                         {
                             var entry = ScriptableObject.CreateInstance<RilsEntryAsset>();
-                            entry.name = entryId;
+                            entry.name = GetEntryDisplayName(entryId);
                             entry.Initialize(script, entryId, RilsLifecycleFlags.All);
                             context.AddObjectToAsset("entry:" + entryId, entry);
                         }
@@ -77,6 +77,14 @@ namespace Rils.Unity.Editor
                 context.LogImportError(
                     $"Failed to compile Rils script '{context.assetPath}': {exception}");
             }
+        }
+
+        private static string GetEntryDisplayName(string entryId)
+        {
+            int separatorIndex = entryId.LastIndexOf("::", StringComparison.Ordinal);
+            return separatorIndex >= 0 && separatorIndex + 2 < entryId.Length
+                ? entryId.Substring(separatorIndex + 2)
+                : entryId;
         }
 
         private static List<byte[]> ReadHostManifestFragments()

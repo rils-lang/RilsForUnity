@@ -64,11 +64,11 @@ namespace Rils.Unity
             if (!Has(RilsLifecycleFlags.Update) || _state == null) return;
             try
             {
-                _state.CallTrait(
+                _state.CallTraitTyped(
                     "RilsBehaviour",
                     "update",
-                    RilsValue.From(_selfHandle),
-                    RilsValue.From(Time.deltaTime));
+                    RilsHostArgument.NamedHandle(_selfHandle, "unity_engine::GameObject"),
+                    RilsHostArgument.From(RilsValue.From(Time.deltaTime)));
             }
             catch (Exception exception)
             {
@@ -94,10 +94,10 @@ namespace Rils.Unity
             if (!Has(flag) || _state == null || _destroyed) return;
             try
             {
-                _state.CallTrait(
+                _state.CallTraitTyped(
                     "RilsBehaviour",
                     functionName,
-                    RilsValue.From(_selfHandle));
+                    RilsHostArgument.NamedHandle(_selfHandle, "unity_engine::GameObject"));
             }
             catch (Exception exception)
             {

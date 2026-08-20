@@ -15,12 +15,21 @@ namespace RilsForUnity
         internal UnityHostBindingModule(
             string name,
             params UnityHostFunctionBinding[] bindings)
+            : this(name, Array.Empty<RilsHostTypeDescriptor>(), bindings)
+        {
+        }
+
+        internal UnityHostBindingModule(
+            string name,
+            IReadOnlyList<RilsHostTypeDescriptor> types,
+            params UnityHostFunctionBinding[] bindings)
         {
             if (bindings == null) throw new ArgumentNullException(nameof(bindings));
             _bindings = Array.AsReadOnly((UnityHostFunctionBinding[])bindings.Clone());
             Descriptor = new RilsHostModuleDescriptor(
                 name,
                 1,
+                types,
                 _bindings.Select(binding => binding.Descriptor).ToArray());
         }
 
@@ -32,6 +41,10 @@ namespace RilsForUnity
         {
             if (registry == null) throw new ArgumentNullException(nameof(registry));
             if (handles == null) throw new ArgumentNullException(nameof(handles));
+            for (int index = 0; index < Descriptor.Types.Count; index++)
+            {
+                registry.Register(Descriptor.Types[index]);
+            }
             for (int index = 0; index < _bindings.Count; index++)
             {
                 UnityHostFunctionBinding binding = _bindings[index];

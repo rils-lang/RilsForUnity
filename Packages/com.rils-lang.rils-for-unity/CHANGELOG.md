@@ -2,6 +2,13 @@
 
 ## [0.1.0] - Unreleased
 
+- Upgraded generated Unity host fragments to Host Manifest v2 and the bundled native facade to
+  C ABI version 4. The binding catalog now declares `Object`, `Component`, `GameObject`, and
+  `Transform` as named host types with Unity inheritance while retaining `HostHandle` transport.
+- Rils scripts and Analyzer completion can use inherited Unity object receiver methods without
+  erasing every logical object type to `HostHandle`.
+- `RilsBehaviour` lifecycle methods now receive a logical `unity_engine::GameObject`; the C# trait
+  call bridge supplies its nominal type while retaining session-bound `HostHandle` transport.
 - Replaced the prototype Unity host registration list with a shared Binding IR. The Editor now
   generates independent `unity_engine` manifest fragments from immutable descriptors, while the
   Player binds the same stable IDs to direct C# handlers. Added the initial `unity_engine::time` API.

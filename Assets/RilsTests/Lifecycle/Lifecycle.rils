@@ -1,28 +1,31 @@
+use unity_engine::*;
+use crate::rils_for_unity::behaviour::RilsBehaviour;
+
 #[derive(Default)]
 pub struct LifecycleBehaviour {
     enabled: bool,
 }
 
 impl RilsBehaviour for LifecycleBehaviour {
-    fn awake(&mut self, host: HostHandle) {
-        host.is_valid();
-        let transform = host.transform();
+    fn awake(&mut self, go: GameObject) {
+        go.is_valid();
+        let transform = go.transform();
         transform.position_x();
         transform.position_y();
         transform.position_z();
-        host.active_self();
+        go.active_self();
     }
 
-    fn start(&mut self, host: HostHandle) {
-        host.is_valid();
+    fn start(&mut self, go: GameObject) {
+        go.is_valid();
     }
 
-    fn update(&mut self, host: HostHandle, delta_seconds: f32) {
-        host.is_valid();
+    fn update(&mut self, go: GameObject, delta_seconds: f32) {
+        go.is_valid();
         let _ = delta_seconds;
     }
 
-    fn on_destroy(&mut self, host: HostHandle) {
-        host.is_valid();
+    fn on_destroy(&mut self, go: GameObject) {
+        go.is_valid();
     }
 }

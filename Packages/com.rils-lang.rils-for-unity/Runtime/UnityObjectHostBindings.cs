@@ -6,8 +6,8 @@ using UnityEngine;
 namespace RilsForUnity
 {
     /// Defines the first typed UnityEngine object modules. Logical object types
-    /// currently lower to HostHandle in manifest v1 while remaining available to
-    /// the binding model for a future nominal host-type manifest.
+    /// use HostHandle transport in manifest v2 while retaining their nominal
+    /// type and inheritance in the compiler and Analyzer.
     public static class UnityObjectHostBindings
     {
         private static readonly RilsHostParameter ObjectType =
@@ -50,6 +50,7 @@ namespace RilsForUnity
             const string capability = "unity_engine.object";
             return new UnityHostBindingModule(
                 "unity_engine::object",
+                UnityEngineHostTypes.All,
                 new UnityHostFunctionBinding(
                     "UnityEngine.CoreModule:UnityEngine.Object.op_Implicit(UnityEngine.Object):System.Boolean",
                     "unity_engine::object::is_valid",
@@ -81,6 +82,7 @@ namespace RilsForUnity
             const string capability = "unity_engine.game_object";
             return new UnityHostBindingModule(
                 "unity_engine::game_object",
+                UnityEngineHostTypes.All,
                 new UnityHostFunctionBinding(
                     "UnityEngine.CoreModule:UnityEngine.GameObject.get_activeSelf():System.Boolean",
                     "unity_engine::game_object::active_self",
@@ -118,6 +120,7 @@ namespace RilsForUnity
             const string capability = "unity_engine.component";
             return new UnityHostBindingModule(
                 "unity_engine::component",
+                UnityEngineHostTypes.All,
                 new UnityHostFunctionBinding(
                     "UnityEngine.CoreModule:UnityEngine.Component.get_gameObject():UnityEngine.GameObject",
                     "unity_engine::component::game_object",
@@ -134,6 +137,7 @@ namespace RilsForUnity
             const string capability = "unity_engine.transform";
             return new UnityHostBindingModule(
                 "unity_engine::transform",
+                UnityEngineHostTypes.All,
                 TransformCoordinate("x", value => value.x),
                 TransformCoordinate("y", value => value.y),
                 TransformCoordinate("z", value => value.z),
